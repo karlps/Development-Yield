@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Development Yield Explorer</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; max-width: 800px; }
+    h1, h2 { color: #2C3E50; }
+    input, button { margin: 5px 0; padding: 5px; }
+    .input-group { margin-bottom: 15px; }
+    .results { border-top: 1px solid #ccc; padding-top: 15px; margin-top: 15px; }
+    .yield-low { color: #D32F2F; font-weight: bold; }
+    .yield-medium { color: #FBC02D; font-weight: bold; }
+    .yield-high { color: #388E3C; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>🏗️ Development Yield Explorer</h1>
+  <p>This tool calculates <strong>Development Yield</strong> — how much annual rental income
+     a project generates relative to total development cost.</p>
+
+  <!-- Formula -->
+  <p>Formula:</p>
+  <p>$$
+    \text{Development Yield (\%)} = \frac{\text{Annual Rent}}{\text{Total Development Cost}} \times 100
+  $$</p>
+
+  <div class="input-group">
+    <label>Land Cost (NOK): </label><br>
+    <input type="number" id="landCost" value="6000000">
+  </div>
+  <div class="input-group">
+    <label>Construction Cost (NOK): </label><br>
+    <input type="number" id="constructionCost" value="10000000">
+  </div>
+  <div class="input-group">
+    <label>Professional Fees (NOK): </label><br>
+    <input type="number" id="fees" value="1000000">
+  </div>
+  <div class="input-group">
+    <label>Other Costs (Permits, Marketing, etc.) (NOK): </label><br>
+    <input type="number" id="otherCosts" value="500000">
+  </div>
+  <div class="input-group">
+    <label>Base Annual Rent (NOK): </label><br>
+    <input type="number" id="baseRent" value="1400000">
+  </div>
+  <div class="input-group">
+    <label>Adjust Rent (% change): </label><br>
+    <input type="range" id="rentPct" min="-50" max="50" value="0">
+    <span id="rentLabel">0%</span>
+  </div>
+
+  <button onclick="calculateYield()">Calculate Yield</button>
+
+  <div class="results">
+    <h2>📊 Results</h2>
+    <p id="yieldOutput"></p>
+    <p id="yieldInterpretation"></p>
+    <div id="yieldPlot" style="width:100%;height:400px;"></div>
+  </div>
+
+<script>
+function calculateYield() {
+    // Get input values
+    const land = Number(document.getElementById("landCost").value);
+    const construction = Number(document.getElementById("constructionCost").value);
+    const fees = Number(document.getElementById("fees").value);
+    const other = Number(document.getElementById("otherCosts").value);
+    const baseRent = Number(document.getElementById("baseRent").value);
+    const rentPct = Number(document.getElementById("rentPct").value);
+
+    // Calculations
+    const totalCost = land + construction + fees + other;
+    const annualRent = baseRent * (1 + rentPct/100);
+    const yieldPct = (annualRent / totalCost) * 100;
+
+    // Display results
+    document.getElementById("yieldLabel").innerText = `${rentPct}%`;
+    document.getElementById("yieldOutput").innerHTML = `
+      <strong>Total Development Cost:</strong> ${totalCost.toLocaleString()} NOK<br>
+      <strong>Adjusted Annual Rent:</strong> ${annualRent.toLocaleString()} NOK<br>
+      <strong>Development Yield:</strong> ${yieldPct.toFixed(2)}%
+    `;
+
+    // Yield interpretation
+    let interpretation = "";
+    if (yieldPct < 6) {
+        interpretation = '<span class="yield-low">Low yield (&lt;6%) — may rely on property appreciation.</span>';
+    } else if (yieldPct <= 8) {
+        interpretation = '<span class="yield-medium">Moderate yield (6–8%) — typical residential project.</span>';
+    } else {
+        interpretation = '<span class="yield-high">High yield (&gt;8%) — strong rental return.</span>';
+    }
+    document.getElementById("yieldInterpretation").innerHTML = interpretation;
+
+    // Plot yield sensitivity (-25% to +25%)
+    const pctValues = [];
+    const yieldValues = [];
+    for (let i=-25; i<=25; i+=5) {
+        pctValues.push(i);
+        yieldValues.push(baseRent*(1+i/100)/totalCost*100);
+    }
+
+    const data = [{
+        x: pctValues,
+        y: yieldValues,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Yield vs Rent Change'
+    }];
+
+    const layout = {
+        title: '📈 Yield Sensitivity to Rent Change',
+        xaxis: { title: 'Rent Change (%)' },
+        yaxis: { title: 'Development Yield (%)' }
+    };
+
+    Plotly.newPlot('yieldPlot', data, layout);
+}
+
+// Update slider label dynamically
+document.getElementById("rentPct").oninput = function() {
+    document.getElementById("rentLabel").innerText = `${this.value}%`;
+};
+</script>
+
+</body>
+</html>

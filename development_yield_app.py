@@ -12,6 +12,9 @@ st.set_page_config(
 # --- TITLE & INTRO ---
 st.title("🏗️ Development Yield Explorer")
 st.markdown("""
+
+Merk at alt innhold er laget av ChatGPT uten noen som helst sjekk!                         
+
 This app helps you **understand development yield** —  
 a key metric in property development showing how much **annual rental income**
 a project generates compared to its **total development cost**.
